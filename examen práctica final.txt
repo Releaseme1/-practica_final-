@@ -1,0 +1,160 @@
+---
+title: "practica_final"
+format: html
+editor: visual
+---
+
+Vamos a utilizar el dataset de semillas que se encuentra aquí: https://archive.ics.uci.edu/ml/datasets/seeds#
+
+Primero vamos a descargarnos el dataset con el siguiente comando:
+
+```{r}
+library(tidyverse)
+df_seeds <- read.table('https://archive.ics.uci.edu/ml/machine-learning-databases/00236/seeds_dataset.txt', col.names =c('area','perimetro','compacto','longitud','anchura','coeficient.asimetria','longitud.ranura','tipo'))
+```
+
+#### PREGUNTA 1
+
+¿Cuantas filas y cuantas columnas tiene el dataframe df_seeds?
+
+**Respuesta**:
+
+columnas: 8
+Filas: 210
+
+#### PREGUNTA 2
+
+Vamos a convertir en factor la columna tipo. Vamos a reemplazar los números por su correspondiente etiqueta (label). La correspondencia entre el código y el tipo es:
+
+-   1 - Kama
+-   2 - Rosa
+-   3 - Canadian
+
+
+
+Convierte en factor la columna tipo, respetando las etiquetas:
+
+**Respuesta**: [1] "Kama"     "Rosa"     "Canadian" "Kama"     "Rosa"     "Kama"   
+
+codigos <- c(1, 2, 3, 1, 2, 1)
+
+tipos <- ifelse(codigos == 1, "Kama",
+               ifelse(codigos == 2, "Rosa",
+                      ifelse(codigos == 3, "Canadian", NA)))
+
+
+
+
+
+#### PREGUNTA 3
+
+¿Cual es la media del area de cada uno de los tipos?
+
+
+Kama
+
+
+
+#### PREGUNTA 4
+
+¿Como se llama el siguiente tipo de gráfico?. ¿Qué representa la línea del centro de la caja?
+
+```{r}
+ggplot(df_seeds, aes(x=tipo, y=area)) + geom_boxplot()
+```
+
+**Respuesta**: Este gráfico es un diagrama de caja (boxplot) y representa la mediana de los datos,Es decir, es el valor que divide a la mitad de los datos en dos partes iguales.
+
+#### PREGUNTA 5
+
+¿Como pintarías un diagrama de puntos (o scatterplot) con ggplot con las siguientes características? - En el eje X la variable compacto - En el eje Y la variable area - Cada tipo de semilla debería tener un color diferente
+
+**Respuesta**:
+
+ggplot(df_seeds, aes(x=compacto, y=area, color=tipo)) + 
+  geom_point()
+
+#### PREGUNTA 6
+
+¿Qué hace la siguiente línea?:
+
+```{r}
+df_seeds |> mutate(is_kama = tipo=='Kama') -> df_seeds
+```
+
+**Respuesta**: Esta línea de código agrega una nueva columna al dataframe df_seeds, la cual indica si el valor en la columna tipo es igual a "Kama".
+
+#### PREGUNTA 7
+
+Vamos a dividir el conjunto de datos en test y training porque vamos a entrenar un modelo que me permita diferenciar si una semilla es de tipo Kama o no. ¿Por qué es aconsejable dividir el dataset en los grupos de train y test?
+
+```{r}
+set.seed(123) # Este set.seed hace que a todos nos generen los mismos número aleatorios
+idx <- sample(1:nrow(df_seeds), 0.7*nrow(df_seeds))
+df_seeds_train <- df_seeds[idx,]
+df_seeds_test <- df_seeds[-idx,]
+```
+
+**Respuesta**: porque al dividir el conjunto de datos en dos partes, se puede utilizar una parte para el entrenamiento (df_seeds_train) y la otra parte para evaluar el desempeño del modelo (df_seeds_test). De esta manera, se puede tener una idea más precisa de cómo se desempeñará el modelo en datos futuros.
+
+#### PREGUNTA 8
+
+Vamos a crear un modelo para realizar una clasificación binaria, donde le pasaremos como entrada las columnas: area, perimetro, compacto, longitud, coeficient.asimetria y longitud.ranura
+
+¿Qué tipo de algoritmo o modelo debería usar?
+
+**Respuesta**: usando la biblioteca rpar o usando la biblioteca randomForest.
+
+#### PREGUNTA 9
+
+Crea un modelo que me permita clasificar si una semilla es de tipo Kama o no con las siguientes columnas: area, perimetro, compacto, longitud, coeficient.asimetria, longitud.ranura
+
+**Respuesta**:
+library(caret)
+
+# Carga de datos de entrenamiento
+seeds_data <- read.csv("seeds_data.csv")
+
+# Separación de datos en conjunto de entrenamiento y prueba
+set.seed(123)
+index <- createDataPartition(seeds_data$class, p = 0.7, list = FALSE)
+train_data <- seeds_data[index, ]
+test_data <- seeds_data[-index, ]
+
+# Creación del modelo
+model <- train(class ~ ., data = train_data, method = "rpart")
+
+# Predicción en datos de prueba
+prediction <- predict(model, newdata = test_data)
+
+# Evaluación del modelo
+confusionMatrix(prediction, test_data$class)
+
+
+#### PREGUNTA 10
+
+Si usamos un umbral de 0 en la salida del modelo (lo que equivale a probabilidad de 0.5 cuando usamos el predict con type='response') ¿Cuales son los valores de precisión y exhausitividad?
+
+**Respuesta**: 
+
+pred_class <- ifelse(prediction > 0, "Kama", "No Kama")
+conf_matrix <- confusionMatrix(pred_class, test_data$class)
+precision <- conf_matrix$overall[1]
+recall <- conf_matrix$byClass[1]
+
+
+#### PREGUNTA 11
+
+¿Qué están haciendo las siguientes líneas?
+
+
+set.seed(123)
+cl<-df_seeds |> select(area,perimetro,compacto,longitud,anchura,coeficient.asimetria,longitud.ranura) |> kmeans(3)
+table(real=df_seeds$tipo,cluster=cl$cluster)
+```
+
+**Respuesta**: 
+
+Fijando la semilla aleatoria en 123 para garantizar la reproducibilidad de los resultados.
+Seleccionando ciertas columnas de un dataframe llamado "df_seeds" y realizando un agrupamiento de datos con el algoritmo k-means en 3 grupos.
+Creando una tabla de frecuencia cruzada para comparar las etiquetas reales de las semillas (df_seeds$tipo) con los grupos resultantes del agrupamiento (cl$cluster).
