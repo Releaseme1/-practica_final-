@@ -51,7 +51,7 @@ tipos <- ifelse(codigos == 1, "Kama",
 ¿Cual es la media del area de cada uno de los tipos?
 
 
-Kama
+Kama: 14 Rosa 38 Canadian: 10.8
 
 
 
